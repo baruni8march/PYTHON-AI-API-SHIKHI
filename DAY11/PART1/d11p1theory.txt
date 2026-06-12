@@ -1,0 +1,214 @@
+#STEPS TO CREATE AN AI API APP
+1.Create virtual environment:python -m venv venv
+
+2.Activate it in PowerShell: .\venv\Scripts\Activate.ps1
+If activation gives error, run:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+Then again:
+.\venv\Scripts\Activate.ps1
+
+3.Install packages:pip install fastapi uvicorn python-dotenv openai
+
+4. Folder structure
+PART1/
+│
+├── main.py
+├── schemas.py
+├── .env
+├── .gitignore
+├── requirements.txt
+│
+├── prompts/
+│   └── triage_prompt.py
+│
+└── services/
+    └── triage_service.py
+
+5. .env
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-4o-mini
+For now, if you do not have an API key, keep it empty.
+The code has a mock fallback so you can still test.
+
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
+
+OpenAI’s current API docs include the Responses API and text generation/structured output areas, so this lesson uses that style.
+
+6. .gitignore
+venv
+.env
+__pycache__
+
+7. requirements.txt
+fastapi
+uvicorn
+python-dotenv
+openai
+
+8.after writing all code files:
+uvicorn main:app --reload --port 8000
+
+9.in browser test:
+http://127.0.0.1:8000
+
+10.Test in FastAPI docs
+Open:http://127.0.0.1:8000/docs
+FastAPI automatically gives API testing UI.
+
+
+Test in Thunder Client
+
+Method:
+
+POST
+
+URL:
+
+http://127.0.0.1:8000/triage
+
+Body JSON:
+
+{
+  "symptoms": "fever, cough, chest pain",
+  "age": 45,
+  "gender": "male",
+  "language": "en"
+}
+
+Expected response:
+
+{
+  "success": true,
+  "data": {
+    "triage_score": "Yellow",
+    "reasoning": "...",
+    "possible_conditions": ["..."],
+    "first_aid_steps": ["..."],
+    "refer_to": "...",
+    "urgency": "...",
+    "safety_warning": "..."
+  }
+}
+-----------------------------------------------
+#SELF-EXPLANATORY:
+
+1.>>Today’s exact goal is:
+Build a small Python AI API that receives patient symptoms and returns triage(deciding how urgent a patient's condition is) advice
+
+2.>>API means:A way for one software to talk to another software.
+Simple example:[x api means the key to talk/take info/give info to x]
+Frontend says:Here are patient symptoms.Please analyze.
+Backend API replies:Triage score is Yellow.
+Refer patient today.
+in this case:
+Thunder Client / frontend
+↓
+FastAPI backend
+↓
+AI service
+↓
+Response
+
+
+3.>>>>>>>>>>>>>  FastAPI  <<<<<<<<<<<<<<<
+
+FastAPI is a Python framework for building APIs.
+In Node.js, we used:Express
+In Python, we are now using:FastAPI
+
+
+4.>>>>>>>>>>>   OpenAI API  <<<<<<<<<<<<<<<<<<
+OpenAI API means we send text to an AI model and get an answer back.
+Example:We send: "Patient has fever, cough, chest pain."
+
+AI returns:"Possible respiratory infection. Triage: Yellow..."
+[In this project, we are not creating the AI model from zero.
+We are using an already trained AI model like:
+OpenAI GPT
+Gemini
+Claude
+Hugging Face model
+These models are already trained by big companies.
+
+We are creating a bridge between:
+Our app/backend
+↓
+OpenAI API
+↓
+AI model]
+
+5.>>>FastAPI vs REST API
+Term	        Meaning
+FastAPI	        A Python framework/tool to build APIs
+REST API	    A style/rule for designing API URLs and methods
+
+Simple:FastAPI = tool
+REST API = design pattern
+we have used rest api before in backend .restapi is just the designation of get/put/post methods
+
+we use fast instead of rest bcz rest isnt a tool to build real projects we need tool which is basically the fastapi
+
+6.Mock fallback means:
+Fake response for testing when real API key is not available.
+Because your .env currently has:
+OPENAI_API_KEY=your_api_key_here
+That is not a real key.
+So we can also keep:
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
+
+Then our code will say:No API key? No problem.
+Return fake sample triage response.
+
+Why useful?
+You can test your FastAPI route even without paid OpenAI API.
+Later, when you get API key, same code will use real AI.
+
+
+7. .env:stores secret /changeable values
+
+8.Schema means:The expected shape of input/output data
+In our file:schemas.py  we write:
+class TriageRequest(BaseModel):
+    symptoms: str
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    language: Optional[str] = "en"
+
+This tells FastAPI:For /triage API, request body should have symptoms.Age, gender, language are optional.
+
+So if user sends wrong data, FastAPI can catch it.
+
+
+9.prompts/triage_prompt.py
+This stores the instruction for AI.
+It tells AI:
+You are a rural healthcare triage assistant.
+Return JSON.
+Do not give final diagnosis.
+Give first-aid and referral advice.
+
+We keep prompt separate because later we can edit prompt without touching main API code.
+
+10.services/triage_service.py
+This is the AI logic file.
+It does:
+Check API key
+↓
+If no key, return mock response
+↓
+If key exists, call OpenAI
+↓
+Parse AI JSON
+↓
+Return result
+
+This is like Node service file.
+
+11.pip install fastapi uvicorn python-dotenv openai
+Package	        Why
+fastapi	        Create Python API
+uvicorn	        Run FastAPI server
+python-dotenv	Read .env file
+openai	        Call OpenAI AI model
