@@ -1,0 +1,90 @@
+>>Today’s exact goal:Build this API:
+POST /vitals/analyze
+
+It will receive patient vitals:
+blood pressure
+heart rate
+temperature
+oxygen saturation
+blood glucose
+
+Then it will return:
+which values are abnormal
+severity of each abnormal value
+overall risk level
+recommendation
+
+>>Today we are using rule-based logic.
+Meaning:
+If SpO2 is below 90 → serious
+If heart rate is above 120 → serious
+If BP is very high → urgent
+
+This is useful because it works even without OpenAI API key.
+
+3.anomaly detection?Anomaly means:
+Something abnormal / outside normal range
+Example:
+SpO2 = 98 → normal
+SpO2 = 88 → abnormal
+
+4.Why is this useful in hackathon?
+Because AI triage alone is not enough.
+A patient may say:
+I feel weak
+But vitals may show:
+SpO2 = 85
+Heart rate = 130
+
+That means the patient is more serious.
+
+>>So later we can combine:
+
+Symptoms + Vitals + OCR history
+↓
+Better triage result
+
+
+>>In D11P1,We took:symptoms
+Example:
+fever, cough, chest pain
+
+Then AI guessed:
+possible causes / possible conditions
+triage level
+first-aid
+referral urgency
+
+>>Why D11P2 is needed
+Patient may say:
+I only feel weak.
+No serious disease.
+
+But vitals may show:
+SpO2 = 85
+Heart rate = 130
+Temperature = 103°F
+
+
+*****TODAY'S API FLOW:
+Thunder Client / FastAPI docs
+↓
+POST /vitals/analyze
+↓
+main.py receives request
+↓
+schemas.py checks input format
+↓
+vitals_service.py checks each vital
+↓
+FastAPI returns JSON response
+
+-------------------------------------------------------
+we can do vitals analysis using AI.
+But we did it manually first because vitals are number-based, and number checking is better with fixed rules.
+
+Simple answer
+AI is good for understanding text.
+Manual rules are better for checking clear numbers.
+
+we dont need ai to think deeply here bcz we can jst do it as we have clean numbers to work with
