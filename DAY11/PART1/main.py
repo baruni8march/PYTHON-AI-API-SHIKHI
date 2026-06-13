@@ -1,19 +1,20 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from schemas import TriageRequest, VitalsRequest
 from services.triage_service import analyze_symptoms
 from services.vitals_service import analyze_vitals
+from services.ocr_service import extract_text_from_image
 
 
-app = FastAPI(title="D11 AI Healthcare API")
+app = FastAPI(title="D12 AI Healthcare API")
 
 
 @app.get("/")
 def home():
     return {
-        "message": "D11 Python FastAPI AI Healthcare API is running"
+        "message": "D12 Python FastAPI AI Healthcare API is running"
     }
 
 
@@ -48,6 +49,38 @@ def vitals_analyze(request: VitalsRequest):
             "success": True,
             "data": result
         }
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
+
+
+@app.post("/ocr/extract")
+async def ocr_extract(file: UploadFile = File(...)):
+    try:
+        if not file.content_type.startswith("image/"):
+            raise HTTPException(
+                status_code=400,
+                detail="Only image files are allowed."
+            )
+
+        image_bytes = await file.read()
+
+        result = extract_text_from_image(
+            image_bytes=image_bytes,
+            filename=file.filename,
+            content_type=file.content_type
+        )
+
+        return {
+            "success": True,
+            "data": result
+        }
+
+    except HTTPException:
+        raise
 
     except Exception as error:
         raise HTTPException(
