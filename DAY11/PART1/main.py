@@ -2,12 +2,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
-from schemas import TriageRequest, VitalsRequest, LabReportRequest
+from schemas import TriageRequest, VitalsRequest, LabReportRequest, TranslationRequest
 from services.triage_service import analyze_symptoms
 from services.vitals_service import analyze_vitals
 from services.ocr_service import extract_text_from_image
 from services.lab_service import analyze_lab_report
-
+from services.stt_service import transcribe_audio
+from services.translation_service import translate_medical_text
 
 app = FastAPI(title="D12 AI Healthcare API")
 
@@ -96,6 +97,58 @@ def lab_analyze(request: LabReportRequest):
         result = analyze_lab_report(
             extracted_text=request.extracted_text,
             patient_gender=request.patient_gender
+        )
+
+        return {
+            "success": True,
+            "data": result
+        }
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
+    
+@app.post("/voice/transcribe")
+async def voice_transcribe(file: UploadFile = File(...)):
+    try:
+        if not file.content_type.startswith("audio/"):
+            raise HTTPException(
+                status_code=400,
+                detail="Only audio files are allowed."
+            )
+
+        audio_bytes = await file.read()
+
+        result = transcribe_audio(
+            audio_bytes=audio_bytes,
+            filename=file.filename,
+            content_type=file.content_type
+        )
+
+        return {
+            "success": True,
+            "data": result
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
+    
+@app.post("/translate")
+def translate(request: TranslationRequest):
+    try:
+        result = translate_medical_text(
+            text=request.text,
+            source_language=request.source_language,
+            target_language=request.target_language,
+            purpose=request.purpose
         )
 
         return {

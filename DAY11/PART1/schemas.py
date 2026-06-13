@@ -22,3 +22,9 @@ class LabReportRequest(BaseModel):
     extracted_text: str
     patient_age: Optional[int] = None
     patient_gender: Optional[str] = None
+
+class TranslationRequest(BaseModel):
+    text: str
+    source_language: Optional[str] = "auto"
+    target_language: Optional[str] = "English"
+    purpose: Optional[str] = "medical"
