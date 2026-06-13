@@ -1,0 +1,1 @@
+at d12p1 we only extracted text from imagebt in this part we will also analyze the report

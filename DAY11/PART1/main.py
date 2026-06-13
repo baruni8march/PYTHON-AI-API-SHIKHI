@@ -2,10 +2,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
-from schemas import TriageRequest, VitalsRequest
+from schemas import TriageRequest, VitalsRequest, LabReportRequest
 from services.triage_service import analyze_symptoms
 from services.vitals_service import analyze_vitals
 from services.ocr_service import extract_text_from_image
+from services.lab_service import analyze_lab_report
 
 
 app = FastAPI(title="D12 AI Healthcare API")
@@ -81,6 +82,26 @@ async def ocr_extract(file: UploadFile = File(...)):
 
     except HTTPException:
         raise
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
+
+
+@app.post("/lab/analyze")
+def lab_analyze(request: LabReportRequest):
+    try:
+        result = analyze_lab_report(
+            extracted_text=request.extracted_text,
+            patient_gender=request.patient_gender
+        )
+
+        return {
+            "success": True,
+            "data": result
+        }
 
     except Exception as error:
         raise HTTPException(
