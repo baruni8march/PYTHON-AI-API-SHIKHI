@@ -3,7 +3,9 @@ load_dotenv()
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
-from schemas import TriageRequest, VitalsRequest, LabReportRequest, TranslationRequest, TTSRequest
+
+from schemas import TriageRequest, VitalsRequest, LabReportRequest, TranslationRequest, TTSRequest,ReportRequest
+
 from services.triage_service import analyze_symptoms
 from services.vitals_service import analyze_vitals
 from services.ocr_service import extract_text_from_image
@@ -11,6 +13,7 @@ from services.lab_service import analyze_lab_report
 from services.stt_service import transcribe_audio
 from services.translation_service import translate_medical_text
 from services.tts_service import generate_tts_audio
+from services.report_service import create_health_report
 
 app = FastAPI(title="D12 AI Healthcare API")
 
@@ -177,6 +180,23 @@ async def tts_speak(request: TTSRequest):
         return FileResponse(
             path=result["file_path"],
             media_type="audio/mpeg",
+            filename=result["file_name"]
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
+    
+@app.post("/report/generate")
+def report_generate(request: ReportRequest):
+    try:
+        result = create_health_report(request.model_dump())
+
+        return FileResponse(
+            path=result["file_path"],
+            media_type="application/pdf",
             filename=result["file_name"]
         )
 

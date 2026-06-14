@@ -1,6 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
-
+from typing import Optional, Dict, Any
 
 class TriageRequest(BaseModel):
     symptoms: str
@@ -34,4 +33,14 @@ class TTSRequest(BaseModel):
     language: Optional[str] = "Bangla"
     voice: Optional[str] = None
     rate: Optional[str] = "+0%"
-    
+
+
+class ReportRequest(BaseModel):
+    patient_name: Optional[str] = "Unknown Patient"
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    symptoms: Optional[str] = None
+    triage_result: Optional[Dict[str, Any]] = None
+    vitals_result: Optional[Dict[str, Any]] = None
+    lab_result: Optional[Dict[str, Any]] = None
+    final_advice: Optional[str] = None
