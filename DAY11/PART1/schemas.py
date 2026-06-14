@@ -28,3 +28,10 @@ class TranslationRequest(BaseModel):
     source_language: Optional[str] = "auto"
     target_language: Optional[str] = "English"
     purpose: Optional[str] = "medical"
+
+class TTSRequest(BaseModel):
+    text: str
+    language: Optional[str] = "Bangla"
+    voice: Optional[str] = None
+    rate: Optional[str] = "+0%"
+    
