@@ -44,3 +44,14 @@ class ReportRequest(BaseModel):
     vitals_result: Optional[Dict[str, Any]] = None
     lab_result: Optional[Dict[str, Any]] = None
     final_advice: Optional[str] = None
+
+class FinalAssessmentRequest(BaseModel):
+    patient_name: Optional[str] = "Unknown Patient"
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    symptoms: Optional[str] = None
+    input_language: Optional[str] = "auto"
+    output_language: Optional[str] = "English"
+    vitals: Optional[VitalsRequest] = None
+    lab_text: Optional[str] = None
+    generate_pdf: Optional[bool] = False

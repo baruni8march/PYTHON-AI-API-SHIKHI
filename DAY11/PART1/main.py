@@ -1,10 +1,20 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import os
+
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 
-from schemas import TriageRequest, VitalsRequest, LabReportRequest, TranslationRequest, TTSRequest,ReportRequest
+from schemas import (
+    TriageRequest,
+    VitalsRequest,
+    LabReportRequest,
+    TranslationRequest,
+    TTSRequest,
+    ReportRequest,
+    FinalAssessmentRequest
+)
 
 from services.triage_service import analyze_symptoms
 from services.vitals_service import analyze_vitals
@@ -14,14 +24,16 @@ from services.stt_service import transcribe_audio
 from services.translation_service import translate_medical_text
 from services.tts_service import generate_tts_audio
 from services.report_service import create_health_report
+from services.final_service import final_assessment
 
-app = FastAPI(title="D12 AI Healthcare API")
+
+app = FastAPI(title="Rural Bangladesh AI Healthcare API")
 
 
 @app.get("/")
 def home():
     return {
-        "message": "D12 Python FastAPI AI Healthcare API is running"
+        "message": "Rural Bangladesh AI Healthcare API is running"
     }
 
 
@@ -114,7 +126,8 @@ def lab_analyze(request: LabReportRequest):
             status_code=500,
             detail=str(error)
         )
-    
+
+
 @app.post("/voice/transcribe")
 async def voice_transcribe(file: UploadFile = File(...)):
     try:
@@ -145,7 +158,8 @@ async def voice_transcribe(file: UploadFile = File(...)):
             status_code=500,
             detail=str(error)
         )
-    
+
+
 @app.post("/translate")
 def translate(request: TranslationRequest):
     try:
@@ -166,7 +180,8 @@ def translate(request: TranslationRequest):
             status_code=500,
             detail=str(error)
         )
-    
+
+
 @app.post("/tts/speak")
 async def tts_speak(request: TTSRequest):
     try:
@@ -188,7 +203,8 @@ async def tts_speak(request: TTSRequest):
             status_code=500,
             detail=str(error)
         )
-    
+
+
 @app.post("/report/generate")
 def report_generate(request: ReportRequest):
     try:
@@ -199,6 +215,51 @@ def report_generate(request: ReportRequest):
             media_type="application/pdf",
             filename=result["file_name"]
         )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
+
+
+@app.get("/report/download/{file_name}")
+def download_report(file_name: str):
+    try:
+        safe_file_name = os.path.basename(file_name)
+        file_path = os.path.join("generated_reports", safe_file_name)
+
+        if not os.path.exists(file_path):
+            raise HTTPException(
+                status_code=404,
+                detail="Report file not found."
+            )
+
+        return FileResponse(
+            path=file_path,
+            media_type="application/pdf",
+            filename=safe_file_name
+        )
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
+
+
+@app.post("/final/assess")
+def final_assess(request: FinalAssessmentRequest):
+    try:
+        result = final_assessment(request)
+
+        return {
+            "success": True,
+            "data": result
+        }
 
     except Exception as error:
         raise HTTPException(
