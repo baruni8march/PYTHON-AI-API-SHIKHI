@@ -82,17 +82,21 @@ def get_backup_final_result(final_status):
 
 def get_gemini_final_assessment(payload: dict, backup_status: str):
     api_key = os.getenv("GEMINI_API_KEY")
-    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    primary_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
     if not api_key:
         return get_backup_final_result(backup_status)
 
     if genai is None:
-        raise ValueError(
-            "google-genai is not installed. Run: python -m pip install google-genai"
-        )
+        return get_backup_final_result(backup_status)
 
     client = genai.Client(api_key=api_key)
+
+    model_list = [
+        primary_model,
+        "gemini-2.0-flash",
+        "gemini-1.5-flash"
+    ]
 
     prompt = f"""
 {FINAL_SYSTEM_PROMPT}
@@ -106,18 +110,34 @@ Complete patient case:
 Give final assessment in valid JSON only.
 """
 
-    response = client.models.generate_content(
-        model=model,
-        contents=prompt
-    )
+    last_error = None
 
-    if not response.text:
-        raise ValueError("Gemini did not return any text.")
+    for model in model_list:
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt
+            )
 
-    result = extract_json_from_text(response.text)
-    result["api_used"] = "gemini"
+            if not response.text:
+                last_error = f"{model} did not return any text."
+                continue
 
-    return result
+            result = extract_json_from_text(response.text)
+            result["api_used"] = "gemini"
+            result["model_used"] = model
+
+            return result
+
+        except Exception as error:
+            last_error = str(error)
+            continue
+
+    backup_result = get_backup_final_result(backup_status)
+    backup_result["api_error"] = last_error
+    backup_result["note"] = "Gemini was unavailable, so backup rule-based final result was used."
+
+    return backup_result
 
 
 def final_assessment(data):
